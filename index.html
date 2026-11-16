@@ -67,8 +67,8 @@ body{display:flex;flex-direction:column}
 <div id="menu">
 <div class="pg on" id="mAuth"><div style="font-size:34px">🔴🟡🟢</div><h1>Побег из Светофора</h1>
 <div style="display:flex;gap:8px;width:100%"><button class="mb sec act" id="tLogin" style="flex:1;min-width:0;min-height:46px;font-size:16px">Вход</button><button class="mb sec" id="tReg" style="flex:1;min-width:0;min-height:46px;font-size:16px">Новый аккаунт</button></div>
-<div class="af" id="fLogin"><input class="inp" id="lg" inputmode="numeric" maxlength="4" placeholder="Логин (4 цифры)" autocomplete="off"><input class="inp" id="lp" type="password" maxlength="8" placeholder="Пароль" autocomplete="off"><button class="mb" id="bLogin">Войти</button></div>
-<div class="af" id="fReg" style="display:none"><div style="color:#bbb;font-size:14px">Логин из 4 случайных цифр выдаётся автоматически</div><input class="inp" id="rp" type="password" maxlength="8" placeholder="Пароль (4–8 символов)" autocomplete="off"><input class="inp" id="rp2" type="password" maxlength="8" placeholder="Повтори пароль" autocomplete="off"><button class="mb" id="bReg">Создать аккаунт</button></div>
+<div class="af" id="fLogin"><input class="inp" id="lg" inputmode="numeric" maxlength="8" placeholder="Логин (8 цифр)" autocomplete="off"><input class="inp" id="lp" type="password" maxlength="8" placeholder="Пароль" autocomplete="off"><button class="mb" id="bLogin">Войти</button></div>
+<div class="af" id="fReg" style="display:none"><div style="color:#bbb;font-size:14px">Логин из 8 случайных цифр выдаётся автоматически</div><input class="inp" id="rp" type="password" maxlength="8" placeholder="Пароль (4–8 символов)" autocomplete="off"><input class="inp" id="rp2" type="password" maxlength="8" placeholder="Повтори пароль" autocomplete="off"><button class="mb" id="bReg">Создать аккаунт</button></div>
 <div id="aerr"></div></div>
 <div class="pg" id="mNew"><h2>Аккаунт создан! 🎉</h2><div>Твой логин:</div><div id="nl"></div><div style="color:#bbb;font-size:14px">Запомни или запиши его — по нему и паролю ты будешь входить.</div><button class="mb" id="bCont">Продолжить</button></div>
 <div class="pg" id="mMain"><div style="font-size:34px">🔴🟡🟢</div><h1>Побег из Светофора</h1><div id="who"></div>
@@ -156,14 +156,15 @@ cab:[[0,()=>SFX.knock()],[1.5,()=>SFX.creak()],[2.1,()=>SFX.growl()],[6.2,()=>SF
 // ===== ачивки =====
 // сюда добавляются ачивки: {id:'код',name:'Название',desc:'Описание'}; выдаются вызовом unlock('код')
 const fmt=x=>{const k=Math.floor(x*10),m=Math.floor(k/600),sec=Math.floor(k/10)%60;return m+':'+String(sec).padStart(2,'0')+'.'+(k%10)};
-let winsN=parseInt(store.get('svf_winsN'))||0,kostya=false;
+let winsN=parseInt(store.get('svf_winsN'))||0,kostya=false,hero='';
 const STD={games:0,wins:0,deaths:0,eaten:0,mpGames:0,hardWins:0,best:0,time:0};let stats=Object.assign({},STD);
 const ACH=[
 {id:'meat',name:'БОЛЬШЕ МЯСА',desc:'Убей монстра в хард-режиме',flavor:'тупо мощь, тупо демон'},
 {id:'fast',name:'Скорострел',desc:'Пройди игру менее чем за 1 минуту 30 секунд',flavor:'меч бесполезен против огнестрела'},
 {id:'pro',name:'Профи',desc:'Пройди обычный режим 3 раза',max:3,flavor:'а ты не так плох'},
 {id:'hunter',name:'Никудышный охотник',desc:'Играя за монстра, дай человеку сбежать',secret:true,flavor:'а ты прям тупой, прям сильно'},
-{id:'chosen',name:'Избранный',desc:'Увидеть сценку с Костей',secret:true,flavor:'только для избранных'}];
+{id:'chosen',name:'Избранный',desc:'Увидеть сценку с Костей',secret:true,flavor:'только для избранных'},
+{id:'chosen2',name:'Избранный 2',desc:'Увидеть сценку с Овиком',secret:true,flavor:'только для избранных'}];
 let ach={};try{ach=JSON.parse(store.get('svf_ach')||'{}')||{}}catch(e){ach={}}
 const allDone=()=>ACH.length>0&&ACH.filter(a=>!a.secret).every(a=>ach[a.id]); // записка за все обычные ачивки (secret:true не считаются)
 function unlock(id){const a=ACH.find(x=>x.id===id);if(!a||ach[id])return;ach[id]=1;saveProg();SFX.good();const nn=allDone();if(sc){gotNow.push(a.name+(a.secret?' — '+a.desc+' (секретная!)':''));if(nn)newNote=true}else say('🏆 Ачивка: '+a.name+(nn?'  ·  📝 Записка: «3 читкод revers»':''),6000)}
@@ -173,12 +174,14 @@ function winAch(){if(HARD&&cheat)unlock('meat');if(gtime<90)unlock('fast');if(!H
 const DSK='#fdb',DHR='#4a2f1b',SKINS=['#fde3cf','#fdb','#f1c27d','#d9a066','#b9794a','#8d5524','#5c3a21'],HAIRS=['#1a1410','#4a2f1b','#8b5a2b','#d9b45a','#b5451b','#9a9a9a','#f2f2f2','#3a7bd5','#d54a9a','#3cb371'];
 let SKIN=DSK,HAIR=DHR,cur=null,accts={};
 try{accts=JSON.parse(store.get('svf_accts')||'{}')||{}}catch(e){accts={}}
+(function(){const mv=k=>/^\d{4}$/.test(k)?(k==='6767'?'67676767':'0000'+k):k;let ch=false;Object.keys(accts).forEach(k=>{const n=mv(k);if(n!==k&&!accts[n]){accts[n]=Object.assign({},accts[k]);if(!accts[k].sp&&accts[k].pw)accts[n].hl=k;delete accts[k];ch=true}});if(ch)store.set('svf_accts',JSON.stringify(accts));const c=store.get('svf_cur');if(c&&/^\d{4}$/.test(c))store.set('svf_cur',mv(c))})();
 const hsh=s=>{let a=0xdeadbeef,b=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677)}a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);return(4294967296*(2097151&b)+(a>>>0)).toString(36)};
 const SPEC_SALT='svf-f439aced7dad3d0a9ecbc042',SPEC_IT=150000,SPEC={"e653b7ecd297c8ed77b3563131694ce14aeb25eebb4783e81e276d5083b1137c": "admin", "e7caee7761fcc59e57a09c829afcd51209655dbf9372cfbdcb16c16a0f309d7b": "tester"};
 let curRole='',frz=false,noclip=false,HAT='';
 const role=()=>curRole;
 const hatsFor=()=>curRole==='admin'?['','crown','pirate']:curRole==='tester'?['','pirate']:[];
-async function specRole(l,p){try{if(!(window.crypto&&crypto.subtle))return'';const te=new TextEncoder(),k=await crypto.subtle.importKey('raw',te.encode(l+':'+p),'PBKDF2',false,['deriveBits']),bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:te.encode(SPEC_SALT),iterations:SPEC_IT,hash:'SHA-256'},k,256),h=Array.from(new Uint8Array(bits)).map(x=>x.toString(16).padStart(2,'0')).join('');return SPEC[h]||''}catch(e){return''}}
+const SPEC_OLD={'00000001':'0001','67676767':'6767'};
+async function specRole(l,p){try{if(!(window.crypto&&crypto.subtle))return'';const te=new TextEncoder(),k=await crypto.subtle.importKey('raw',te.encode((SPEC_OLD[l]||l)+':'+p),'PBKDF2',false,['deriveBits']),bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:te.encode(SPEC_SALT),iterations:SPEC_IT,hash:'SHA-256'},k,256),h=Array.from(new Uint8Array(bits)).map(x=>x.toString(16).padStart(2,'0')).join('');return SPEC[h]||''}catch(e){return''}}
 function saveProg(){if(!cur||!accts[cur])return;Object.assign(accts[cur],{ach:ach,winsN:winsN,stats:stats,skin:SKIN,hair:HAIR,hat:HAT});store.set('svf_accts',JSON.stringify(accts))}
 function loginAs(l,r){cur=l;curRole=r||'';const a=accts[l];ach=a.ach||{};winsN=a.winsN||0;stats=Object.assign({},STD,a.stats||{});SKIN=a.skin||DSK;HAIR=a.hair||DHR;HAT=hatsFor().includes(a.hat||'')?(a.hat||''):'';store.set('svf_cur',l);store.set('svf_role',r||'');if(a.nick&&$('nick'))$('nick').value=a.nick;if(r==='admin'){ACH.forEach(x=>ach[x.id]=1);winsN=Math.max(winsN,3)}saveProg()}
 function bootAuth(){const l=store.get('svf_cur'),r=store.get('svf_role')||'';if(l&&accts[l]){loginAs(l,r&&accts[l].sp?r:'');show('mMain');mpResume()}else show('mAuth')}
@@ -259,7 +262,7 @@ const UI=['hud','act','ch','hg','pad','pz','cc','adm','tst','ap'];
 function statFin(w,m){if(!REV){const done=Math.round(gtime*10)/10;stats.time+=gtime;if(kostya){}else if(w){stats.wins++;if(HARD)stats.hardWins++;if(!stats.best||done<stats.best)stats.best=done}else stats.deaths++}else if(m==='rwin'&&!MP.on)stats.eaten++;saveProg()}
 function finish(w,m){if(over||sc)return;statFin(w,m);
 if(MP.on&&!REV&&w){mpSelf(true);winAch();padOpen=false;mg=null;$('msg').textContent='';UI.forEach(i=>$(i).style.display='none');if(!sc&&!MP.ended&&!over){MP.spec=true;MP.watch=null;say('🟢 Ты выбрался! Ждём остальных. Тапни экран, чтобы сменить игрока',7000)}return}
-const k=(m==='rwin'||m==='rlose')?m:w?(kostya?'kostya':cheat?'cheat':'leave'):(m==='cab'?'cab':'eat');sc={k,t:0,snd:(SND[k]||[]).map(a=>({t:a[0],f:a[1],d:0}))};if(k==='kostya'){sc.pl=[{col:'#fc3',sk:SKIN,hr:HAIR,ht:HAT,n:''}];unlock('chosen')}if(MP.on&&!REV)mpSelf(w,m);if(w&&!REV&&!kostya)winAch();if(m==='rlose')unlock('hunter');padOpen=false;mg=null;$('msg').textContent='';UI.forEach(i=>$(i).style.display='none')}
+const k=(m==='rwin'||m==='rlose')?m:w?(kostya?'kostya':cheat?'cheat':'leave'):(m==='cab'?'cab':'eat');sc={k,t:0,snd:(SND[k]||[]).map(a=>({t:a[0],f:a[1],d:0}))};if(k==='kostya'){sc.hero=hero||'kostya';sc.pl=[{col:'#fc3',sk:SKIN,hr:HAIR,ht:HAT,n:''}];unlock(sc.hero==='ovik'?'chosen2':'chosen')}if(MP.on&&!REV)mpSelf(w,m);if(w&&!REV&&!kostya)winAch();if(m==='rlose')unlock('hunter');padOpen=false;mg=null;$('msg').textContent='';UI.forEach(i=>$(i).style.display='none')}
 let mt0;function say(s,ms=2500){$('msg').textContent=s;clearTimeout(mt0);mt0=setTimeout(()=>$('msg').textContent='',ms)}
 const keys={};let act=false,actP=false,jo=null,jv=[0,0],padOpen=false;
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;keys[e.code]=1;if(e.code==='KeyE'||e.code==='Space'){if(!act)actP=true;act=true}});
@@ -285,7 +288,7 @@ $('pzx').onclick=()=>{padOpen=false;$('pz').style.display='none'};
 // устройство читкодов
 $('ch').onclick=()=>{if(sc||over)return;padOpen=true;$('ci').value='';$('cc').style.display='flex'};
 $('cx').onclick=()=>{padOpen=false;$('cc').style.display='none'};
-$('cok').onclick=()=>{const v=$('ci').value.trim().toLowerCase();if(v==='meat'){SFX.good();cheat=true;if(MP.on&&MP.started){MP.meat=true;mpFlag('meat')}padOpen=false;$('cc').style.display='none';say('🥩 Читкод MEAT активирован! Выход будет особенным.',4500)}else if(v==='beer'){beer=true;padOpen=false;$('cc').style.display='none';SFX.good();say('🐻‍❄️ Читкод BEER активирован! Remember November 2026 is coming...',5000)}else if(v==='revers'){$('cc').style.display='none';padOpen=false;SFX.good();startRev()}else if(v==='kostya'&&!REV&&!MPM&&!sc){kostya=true;padOpen=false;$('cc').style.display='none';SFX.good();if(MP.on&&MP.started){MP.kostya=true;if(MP.host)mpKostyaEnd();else mpFlag('kostya')}else finish(true)}else{SFX.bad();say('Устройство: неизвестный код')}};
+$('cok').onclick=()=>{const v=$('ci').value.trim().toLowerCase();if(v==='meat'){SFX.good();cheat=true;if(MP.on&&MP.started){MP.meat=true;mpFlag('meat')}padOpen=false;$('cc').style.display='none';say('🥩 Читкод MEAT активирован! Выход будет особенным.',4500)}else if(v==='beer'){beer=true;padOpen=false;$('cc').style.display='none';SFX.good();say('🐻‍❄️ Читкод BEER активирован! Remember November 2026 is coming...',5000)}else if(v==='revers'){$('cc').style.display='none';padOpen=false;SFX.good();startRev()}else if((v==='kostya'||v==='bibizan')&&!REV&&!MPM&&!sc){hero=v==='kostya'?'kostya':'ovik';kostya=true;padOpen=false;$('cc').style.display='none';SFX.good();if(MP.on&&MP.started){MP.kostya=true;MP.hero=hero;if(MP.host)mpKostyaEnd();else mpFlag(hero)}else finish(true)}else{SFX.bad();say('Устройство: неизвестный код')}};
 // мини-игра «сердце»
 function endMg(ok){mg=null;$('hg').style.display='none';if(!sc)$('act').style.display='block';if(ok){SFX.good();mo.st='p';mo.path=[];mo.ling=0;mgCool=10;say('Сердце успокоилось. Монстр ушёл...',3000)}else mgCool=3}
 function hud(){const s=(id,d,tx)=>{const e=$(id);e.className=d?'d':'';e.textContent=(d?'☑ ':'☐ ')+tx};
@@ -421,7 +424,7 @@ function endTxt(k){const b=beer;
 if(k==='rwin')return['Ты съел человека! 🥩','Слепой монстр победил — слух не подвёл.'];
 if(k==='rlose')return['Человек сбежал! 🟢','Ты не успел: он прошёл «Светофор» быстрее тебя.'];
 if(k==='cheat')return['Ты раздавил '+(b?'медведя':'мясного монстра')+'! 👟'+(b?'🐻‍❄️':'🥩'),'Читкод MEAT сработал. Свобода из «Светофора»!'+(HARD?' Внутри '+(b?'медведя':'монстра')+' была записка: «2 читкод beer»':'')];
-if(k==='kostya')return['Ты выбрался! 🟢','В «Светофор» ворвался Костя: он съел '+(b?'медведя':'монстра')+', помог тебе выбраться и взорвал всё вокруг.'];
+if(k==='kostya')return['Ты выбрался! 🟢','В «Светофор» ворвался '+(hero==='ovik'?'Овик':'Костя')+': он съел '+(b?'медведя':'монстра')+', помог тебе выбраться и взорвал всё вокруг.'];
 if(k==='leave')return['Ты выбрался! 🟢',(b?'Медведь':'Монстр')+' остался в «Светофоре», а внутрь уже зашёл другой человек...'];
 if(k==='eat')return b?['Тебя съел белый медведь 🐻‍❄️','Remember November 2026 is coming...']:['Тебя съел мясной монстр 🥩','Он слепой, но слух у него отличный.'];
 return['Тебя вытащили из шкафа и съели '+(b?'🐻‍❄️':'🥩'),'Сердце выдало тебя.']}
@@ -514,8 +517,8 @@ SND.gleave=[[0,()=>SFX.win()],[3.2,()=>SFX.creak()],[5.6,()=>SFX.door()],[9.6,()
 SND.gburn=[[0,()=>SFX.win()],[3.3,()=>SFX.alert()],[4.4,()=>hiss(1.4,.25,2600)],[6.2,()=>SFX.growl()],[7.6,()=>hiss(2.2,.25,2200)],[10.8,()=>SFX.good()]];
 function manP(X,gy,u,p,dir,bob,bk){const s0=SKIN,h0=HAIR,t0=HAT;SKIN=p.sk||DSK;HAIR=p.hr||DHR;HAT=p.ht||'';man(X,gy,u,'#fc3',dir,bob,bk,null,p.col);SKIN=s0;HAIR=h0;HAT=t0}
 function mpGroupScene(){if(sc)return;MP.gshown=true;const k=MP.kostya?'gkostya':MP.meat?'gburn':'gleave',ps=Object.values(MP.pl).filter(p=>p.role==='h'&&(p.st==='e'||(MP.kostya&&p.st!=='d'))).slice(0,6);
-sc={k,t:0,pl:ps.map(p=>({n:p.name,col:PAL[(p.idx||0)%PAL.length],sk:p.skin,hr:p.hair,ht:p.hat})),snd:(SND[k]||[]).map(a=>({t:a[0],f:a[1],d:0}))};
-padOpen=false;mg=null;$('msg').textContent='';UI.forEach(i=>$(i).style.display='none');if(k==='gkostya')unlock('chosen')}
+sc={k,t:0,hero:MP.hero||'kostya',pl:ps.map(p=>({n:p.name,col:PAL[(p.idx||0)%PAL.length],sk:p.skin,hr:p.hair,ht:p.hat})),snd:(SND[k]||[]).map(a=>({t:a[0],f:a[1],d:0}))};
+padOpen=false;mg=null;$('msg').textContent='';UI.forEach(i=>$(i).style.display='none');if(k==='gkostya')unlock(MP.hero==='ovik'?'chosen2':'chosen')}
 function gDraw(ct){const burn=sc.k==='gburn',u=Math.min(vw/360,vh/480),gy=vh*.72,sw=vw*.34,dx=sw-26*u,ps=sc.pl,n=ps.length,f=burn?Math.min(1,Math.max(0,(ct-4.1)/3)):0;
 ctx.setTransform(dpr,0,0,dpr,0,0);ctx.save();bg(u,gy,sw);
 if(burn){ctx.fillStyle='rgba(40,10,0,'+Math.min(.45,Math.max(0,(ct-3.5)*.1))+')';ctx.fillRect(0,0,vw,gy)}
@@ -543,15 +546,17 @@ cap(ct<2.8?(w?'Вы выбрались из «Светофора»!':'Ты вы�
 // ===== СЦЕНКА «КОСТЯ»: толстяк со светлыми волосами съедает монстра, выводит людей и взрывает «Светофор» =====
 SND.kostya=SND.gkostya=[[0,()=>SFX.growl()],[1.6,()=>SFX.growl()],[2.4,()=>SFX.thud()],[3.5,()=>SFX.thud()],[4.6,()=>SFX.chomp()],[5.0,()=>SFX.chomp()],[5.4,()=>SFX.chomp()],[6.0,()=>SFX.good()],[7.2,()=>SFX.door()],[9.4,()=>SFX.alert()],[10.2,()=>{hiss(1.3,.6,1800);tone(70,.9,'sawtooth',.5,25)}]];
 function monDraw(x,y,s,u){ctx.save();ctx.translate(x,y);ctx.scale(s*u,s*u);if(beer){ctx.scale(1.22,1.22);bearMap(0,0)}else{ctx.fillStyle='#b8322b';ctx.beginPath();ctx.arc(0,0,22,0,7);ctx.fill();ctx.fillStyle='#7d1d1a';ctx.beginPath();ctx.arc(-8,6,7,0,7);ctx.arc(9,-7,6,0,7);ctx.fill();ctx.fillStyle='#ddd';ctx.beginPath();ctx.arc(-8,-5,5,0,7);ctx.arc(7,-5,5,0,7);ctx.fill();ctx.fillStyle='#f2e8d0';ctx.fillRect(-11,9,22,6)}ctx.restore()}
-function kostyaDraw(X,gy,u,bob,mo,bl){ctx.save();ctx.translate(X,gy);
-ctx.fillStyle='#2a3a8a';ctx.fillRect(-19*u,-42*u,16*u,42*u);ctx.fillRect(3*u,-42*u,16*u,42*u);ctx.fillStyle='#222';ctx.fillRect(-24*u,-8*u,21*u,8*u);ctx.fillRect(2*u,-8*u,21*u,8*u);
-ctx.fillStyle='#e9e4d6';ctx.beginPath();ctx.ellipse(0,-(68+bob)*u,32*bl*u,35*u,0,0,7);ctx.fill();ctx.fillStyle='#d8d1bd';ctx.beginPath();ctx.ellipse(0,-(54+bob)*u,24*bl*u,15*u,0,0,7);ctx.fill();
-ctx.fillStyle='#fdb';ctx.beginPath();ctx.arc(-35*u,-(62+bob)*u,8*u,0,7);ctx.arc(35*u,-(62+bob)*u,8*u,0,7);ctx.fill();
-ctx.beginPath();ctx.arc(0,-(112+bob)*u,16*u,0,7);ctx.fill();
-ctx.fillStyle='#f4d35e';ctx.beginPath();ctx.arc(0,-(114+bob)*u,16.6*u,Math.PI*1.04,Math.PI*1.96);ctx.closePath();ctx.fill();ctx.fillRect(-16.6*u,-(121+bob)*u,33*u,7*u);
-ctx.fillStyle='#000';ctx.beginPath();ctx.arc(-6*u,-(115+bob)*u,2*u,0,7);ctx.arc(6*u,-(115+bob)*u,2*u,0,7);ctx.fill();
-ctx.fillStyle='#600';ctx.beginPath();ctx.ellipse(0,-(104+bob)*u,(5+mo*6)*u,(2+mo*9)*u,0,0,7);ctx.fill();ctx.restore()}
-function kIn(ct,u,gy,pl){const n=pl.length,sh=(ct>2.4&&ct<2.9)||(ct>4.1&&ct<4.4)?9:0;if(sh)ctx.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
+const HERO={kostya:{n:'Костя',sk:'#fdb',hr:'#f4d35e',sh:'#e9e4d6',sh2:'#d8d1bd',pn:'#2a3a8a',leg:42,ty:68,rx:32,ry:35,hy:112,mo:'#600'},
+ovik:{n:'Овик',sk:'#7a4a2e',hr:'#161616',sh:'#3a6fc4',sh2:'#2f5aa0',pn:'#33363d',leg:30,ty:52,rx:38,ry:30,hy:86,mo:'#4a0d0d'}};
+function heroDraw(X,gy,u,bob,mo,bl,H){ctx.save();ctx.translate(X,gy);
+ctx.fillStyle=H.pn;ctx.fillRect(-19*u,-H.leg*u,16*u,H.leg*u);ctx.fillRect(3*u,-H.leg*u,16*u,H.leg*u);ctx.fillStyle='#222';ctx.fillRect(-24*u,-8*u,21*u,8*u);ctx.fillRect(2*u,-8*u,21*u,8*u);
+ctx.fillStyle=H.sh;ctx.beginPath();ctx.ellipse(0,-(H.ty+bob)*u,H.rx*bl*u,H.ry*u,0,0,7);ctx.fill();ctx.fillStyle=H.sh2;ctx.beginPath();ctx.ellipse(0,-(H.ty-14+bob)*u,(H.rx-8)*bl*u,15*u,0,0,7);ctx.fill();
+ctx.fillStyle=H.sk;ctx.beginPath();ctx.arc(-(H.rx+3)*u,-(H.ty-6+bob)*u,8*u,0,7);ctx.arc((H.rx+3)*u,-(H.ty-6+bob)*u,8*u,0,7);ctx.fill();
+ctx.beginPath();ctx.arc(0,-(H.hy+bob)*u,16*u,0,7);ctx.fill();
+ctx.fillStyle=H.hr;ctx.beginPath();ctx.arc(0,-(H.hy+2+bob)*u,16.6*u,Math.PI*1.04,Math.PI*1.96);ctx.closePath();ctx.fill();ctx.fillRect(-16.6*u,-(H.hy+9+bob)*u,33*u,7*u);
+ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-6*u,-(H.hy+3+bob)*u,3.2*u,0,7);ctx.arc(6*u,-(H.hy+3+bob)*u,3.2*u,0,7);ctx.fill();ctx.fillStyle='#000';ctx.beginPath();ctx.arc(-5.5*u,-(H.hy+3+bob)*u,1.7*u,0,7);ctx.arc(6.5*u,-(H.hy+3+bob)*u,1.7*u,0,7);ctx.fill();
+ctx.fillStyle=H.mo;ctx.beginPath();ctx.ellipse(0,-(H.hy-8+bob)*u,(5+mo*6)*u,(2+mo*9)*u,0,0,7);ctx.fill();ctx.restore()}
+function kIn(ct,u,gy,pl,H){const n=pl.length,sh=(ct>2.4&&ct<2.9)||(ct>4.1&&ct<4.4)?9:0;if(sh)ctx.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
 const xk=vw*.46,step=n>1?Math.min(30*u,vw*.22/(n-1)):0,xp=i=>vw*.1+i*step,my0=gy-33*u,door=vw-46*u;
 ctx.fillStyle='#4b3030';ctx.fillRect(-10,0,vw+20,gy);ctx.fillStyle='#d8302b';ctx.fillRect(-10,gy-215*u,vw+20,16*u);
 for(let j=0;j<4;j++){const sx=12*u+j*((vw-24*u)/4),w2=(vw-24*u)/4-14*u;ctx.fillStyle='#6b4a2e';ctx.fillRect(sx,gy-150*u,w2,128*u);for(let r=0;r<3;r++)for(let c=0;c<4;c++){ctx.fillStyle=['#d33','#fc2','#3a6','#38d'][(j+r+c)%4];ctx.fillRect(sx+4*u+c*(w2-8*u)/4,gy-142*u+r*40*u,(w2-8*u)/4-3*u,30*u)}}
@@ -562,13 +567,13 @@ if(ct<2.4){ctx.fillStyle='rgba(0,0,0,'+(.2+(Math.sin(ct*23)>.6?.3:0))+')';ctx.fi
 const e6=Math.min(1,Math.max(0,(ct-6.4)/.8)),fl=ct>6.4;
 pl.forEach((p,i)=>{const tg=vw-34*u-i*10*u,x=xp(i)+(tg-xp(i))*e6,sh2=!fl&&ct>1?Math.sin(ct*40+i)*2*u:0,bob=fl&&e6<1?Math.abs(Math.sin(ct*12+i))*3:0;manP(x+sh2,gy,u,p,1,bob,false);
 if(n>1&&!fl){ctx.fillStyle='#fff';ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.font='bold '+11*u+'px sans-serif';ctx.textAlign='center';ctx.strokeText(p.n,x,gy-126*u);ctx.fillText(p.n,x,gy-126*u)}});
-if(ct<5.6){let x,y=my0,s=1.5;if(ct<2.4){x=vw*.62-vw*.36*ct/2.4;y-=Math.abs(Math.sin(ct*5))*4*u}else if(ct<3.4)x=vw*.26;else if(ct<4.2)x=vw*.26+vw*.08*(ct-3.4)/.8;else{const k=(ct-4.2)/1.4;x=vw*.34+(xk-vw*.34)*k;y=my0+(gy-104*u-my0)*k;s=1.5-1.35*k}monDraw(x,y,s,u)}
+if(ct<5.6){let x,y=my0,s=1.5;if(ct<2.4){x=vw*.62-vw*.36*ct/2.4;y-=Math.abs(Math.sin(ct*5))*4*u}else if(ct<3.4)x=vw*.26;else if(ct<4.2)x=vw*.26+vw*.08*(ct-3.4)/.8;else{const k=(ct-4.2)/1.4;x=vw*.34+(xk-vw*.34)*k;y=my0+(gy-(H.hy-8)*u-my0)*k;s=1.5-1.35*k}monDraw(x,y,s,u)}
 if(ct>=2.4){const k=Math.min(1,(ct-2.4)/1.0),ee=1-(1-k)*(1-k);let X=ct<3.4?vw+60*u+(xk-vw-60*u)*ee:xk;if(fl)X=xk+(vw-70*u-xk)*e6;
 const bob=(k<1||(fl&&e6<1))?Math.abs(Math.sin(ct*12))*4:0,mo=ct<4.2?.15:ct<5.6?.25+(ct-4.2)/1.4*.75:ct<6.4?.3+.3*Math.abs(Math.sin((ct-5.6)*14)):.1,bl=ct<5.4?1:1+.12*Math.min(1,(ct-5.4)/.4);
 if(k<1){ctx.fillStyle='rgba(200,190,170,.5)';for(let j=0;j<4;j++){ctx.beginPath();ctx.arc(X+30*u+j*14*u,gy-4*u-j*3*u,(5+j*2)*u,0,7);ctx.fill()}}
-kostyaDraw(X,gy,u,bob,mo,bl);ctx.fillStyle='#fff';ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.font='bold '+12*u+'px sans-serif';ctx.textAlign='center';ctx.strokeText('Костя',X,gy-141*u);ctx.fillText('Костя',X,gy-141*u)}
+heroDraw(X,gy,u,bob,mo,bl,H);ctx.fillStyle='#fff';ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.font='bold '+12*u+'px sans-serif';ctx.textAlign='center';ctx.strokeText(H.n,X,gy-(H.hy+29)*u);ctx.fillText(H.n,X,gy-(H.hy+29)*u)}
 if(ct>6.9){ctx.fillStyle='rgba(255,255,255,'+Math.min(1,(ct-6.9)/.3)+')';ctx.fillRect(-20,-20,vw+40,vh+40)}}
-function kOut(ct,u,gy,pl){const n=pl.length,sw=vw*.34,dc=sw-22*u,base=sw+122*u,step=n>1?Math.min(34*u,(vw-26*u-base)/(n-1)):0,xp=i=>base+i*step,xk=sw+60*u,tb=10.2,boom=ct>=tb,e=Math.max(0,ct-tb);
+function kOut(ct,u,gy,pl,H){const n=pl.length,sw=vw*.34,dc=sw-22*u,base=sw+122*u,step=n>1?Math.min(34*u,(vw-26*u-base)/(n-1)):0,xp=i=>base+i*step,xk=sw+60*u,tb=10.2,boom=ct>=tb,e=Math.max(0,ct-tb);
 if(boom&&ct<tb+.7)ctx.translate((Math.random()-.5)*9,(Math.random()-.5)*9);
 bg(u,gy,sw);
 if(boom){const g2=ctx.createLinearGradient(0,0,0,gy);g2.addColorStop(0,'#4a9bff');g2.addColorStop(1,'#cdeaff');ctx.fillStyle=g2;ctx.fillRect(-2,gy-152*u,sw+4*u,153*u);
@@ -576,20 +581,20 @@ ctx.fillStyle='#4a2a22';ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(8*u,gy-26*u)
 pl.forEach((p,i)=>{const t0=7.5+i*.35,k=Math.min(1,Math.max(0,(ct-t0)/1.3));if(ct<t0)return;const x=dc+(xp(i)-dc)*(1-(1-k)*(1-k)),jump=(ct>8.8&&ct<tb)?Math.abs(Math.sin(ct*7+i))*8*u:0,bob=k<1?Math.abs(Math.sin(ct*12+i))*3:0;manP(x,gy-jump,u,p,k<1?1:-1,bob,false);
 if(n>1&&k>=1){ctx.fillStyle='#fff';ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.font='bold '+11*u+'px sans-serif';ctx.textAlign='center';ctx.strokeText(p.n,x,gy-126*u-jump);ctx.fillText(p.n,x,gy-126*u-jump)}});
 const k0=Math.min(1,Math.max(0,(ct-7.2)/1.4)),ee=1-(1-k0)*(1-k0),X=dc+(xk-dc)*ee;
-kostyaDraw(X,gy,u,k0<1?Math.abs(Math.sin(ct*12))*4:0,.1,1.12);ctx.fillStyle='#fff';ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.font='bold '+12*u+'px sans-serif';ctx.textAlign='center';ctx.strokeText('Костя',X,gy-141*u);ctx.fillText('Костя',X,gy-141*u);
+heroDraw(X,gy,u,k0<1?Math.abs(Math.sin(ct*12))*4:0,.1,1.12,H);ctx.fillStyle='#fff';ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.font='bold '+12*u+'px sans-serif';ctx.textAlign='center';ctx.strokeText(H.n,X,gy-(H.hy+29)*u);ctx.fillText(H.n,X,gy-(H.hy+29)*u);
 if(ct>=8.6&&ct<tb){const hx=xk-36*u,hy=gy-64*u,p=Math.max(0,(ct-9.4)/.8),x=hx+(dc-hx)*p,y=hy+(gy-40*u-hy)*p-Math.sin(p*Math.PI)*70*u;ctx.save();ctx.translate(x,y);ctx.rotate(p*12);ctx.fillStyle='#c22';ctx.fillRect(-4*u,-12*u,8*u,24*u);ctx.fillStyle='#fd4';ctx.fillRect(-4*u,-3*u,8*u,5*u);ctx.fillStyle=(Math.floor(ct*20)%2)?'#ff0':'#f80';ctx.beginPath();ctx.arc(0,-16*u,3.5*u,0,7);ctx.fill();ctx.restore()}
 if(boom){const cx=sw*.5,cy=gy-70*u;ctx.fillStyle='rgba(255,140,0,'+Math.max(0,1-e/1.2)+')';ctx.beginPath();ctx.arc(cx,cy,(20+e*190)*u,0,7);ctx.fill();ctx.fillStyle='rgba(255,230,90,'+Math.max(0,1-e/.8)+')';ctx.beginPath();ctx.arc(cx,cy,(10+e*120)*u,0,7);ctx.fill();
 for(let j=0;j<16;j++){const a=-Math.PI*((j%8)/7)+(j>7?.25:0),v=(110+((j*37)%90))*u,x=cx+Math.cos(a)*v*e*1.3,y=cy+Math.sin(a)*v*e*1.3+190*u*e*e;if(y>gy)continue;ctx.save();ctx.translate(x,y);ctx.rotate(e*6+j);ctx.fillStyle=['#c33','#fc2','#555'][j%3];ctx.fillRect(-4*u,-4*u,8*u,8*u);ctx.restore()}
 if(e>.3)for(let j=0;j<5;j++){const k=Math.min(1,(e-.3)/2);ctx.fillStyle='rgba(70,70,70,'+.5*(1-k*.6)+')';ctx.beginPath();ctx.arc(sw*.15+j*sw*.17+Math.sin(ct+j)*8*u,gy-30*u-k*130*u-j*4*u,(14+k*30)*u,0,7);ctx.fill()}
 ctx.fillStyle='rgba(255,255,255,'+Math.max(0,1-e*3)+')';ctx.fillRect(-20,-20,vw+40,vh+40)}
 else if(ct<7.6){ctx.fillStyle='rgba(255,255,255,'+Math.max(0,1-(ct-7.2)/.4)+')';ctx.fillRect(-20,-20,vw+20,vh+20)}}
-function kDraw(ct){const u=Math.min(vw/360,vh/480),gy=vh*.72,pl=sc.pl||[],w=pl.length>1,b=beer;
-ctx.setTransform(dpr,0,0,dpr,0,0);ctx.save();if(ct<7.2)kIn(ct,u,gy,pl);else kOut(ct,u,gy,pl);ctx.restore();
-cap(ct<2.4?(w?'Монстр загнал вас в угол «Светофора»...':'Монстр загнал тебя в угол «Светофора»...'):ct<3.4?'В «Светофор» врывается КОСТЯ!':ct<4.4?'Костя хватает '+(b?'медведя':'монстра')+'...':ct<6.2?'ЧАВК! '+(b?'Медведя':'Монстра')+' больше нет '+(b?'🐻‍❄️':'🥩'):ct<7.2?(w?'Костя ведёт вас к выходу...':'Костя ведёт тебя к выходу...'):ct<8.8?'Костя помог выбраться из «Светофора»!':ct<9.4?'А теперь — прощай, «Светофор»...':ct<10.2?'Динамит!':'БАБАХ! 💥 Костя взорвал «Светофор»!')}
+function kDraw(ct){const u=Math.min(vw/360,vh/480),gy=vh*.72,pl=sc.pl||[],w=pl.length>1,b=beer,H=HERO[sc.hero||'kostya']||HERO.kostya,nm=H.n,NM=nm.toUpperCase();
+ctx.setTransform(dpr,0,0,dpr,0,0);ctx.save();if(ct<7.2)kIn(ct,u,gy,pl,H);else kOut(ct,u,gy,pl,H);ctx.restore();
+cap(ct<2.4?(w?'Монстр загнал вас в угол «Светофора»...':'Монстр загнал тебя в угол «Светофора»...'):ct<3.4?'В «Светофор» врывается '+NM+'!':ct<4.4?nm+' хватает '+(b?'медведя':'монстра')+'...':ct<6.2?'ЧАВК! '+(b?'Медведя':'Монстра')+' больше нет '+(b?'🐻‍❄️':'🥩'):ct<7.2?(w?nm+' ведёт вас к выходу...':nm+' ведёт тебя к выходу...'):ct<8.8?nm+' помог выбраться из «Светофора»!':ct<9.4?'А теперь — прощай, «Светофор»...':ct<10.2?'Динамит!':'БАБАХ! 💥 '+nm+' взорвал «Светофор»!')}
 function sceneDraw(){const k=sc.k,tt=sc.t;if(k==='kostya'||k==='gkostya')kDraw(tt);else if(k==='gleave'||k==='gburn')gDraw(tt);else if(k==='cheat')cutDraw(tt);else if(k==='leave')leaveDraw(tt);else if(k==='eat'||k==='rwin'||k==='meal')eatDraw(tt);else if(k==='rlose')leaveDraw(tt);else if(tt<3)cabDraw(tt);else eatDraw(tt-3)}
 let last=performance.now();
 function loop(n){const dt=Math.min(.05,(n-last)/1000);last=n;if(playing){t+=dt;if(MP.on)mpTick(dt);if(sc){sc.t+=dt;sc.snd.forEach(a=>{if(!a.d&&sc.t>=a.t){a.d=1;a.f()}});sceneDraw();if(sc.t>dur(sc.k)&&!over)endScene()}else{if(!over){gtime+=dt;$('sw').textContent='⏱ '+fmt(gtime);upd(dt)}draw()}}requestAnimationFrame(loop)}
-function startGame(hard,seed){if(!cur)return;frz=false;noclip=false;$('a6').textContent='👻 Заморозить монстра: выкл';$('a7').textContent='🧱 Ноуклип: выкл';$('adm').style.display=role()==='admin'?'block':'none';$('tst').style.display=role()==='tester'?'block':'none';ac();gtime=0;gotNow=[];HARD=hard;HK=hard?1.4:1;SPP=hard?72:60;SPH=hard?108:92;if(seed!==undefined)rnd=mulberry32(seed);build(hard,MP.on);rnd=Math.random;mmInit();kostya=false;stats.games++;if(MP.on)stats.mpGames++;saveProg();
+function startGame(hard,seed){if(!cur)return;frz=false;noclip=false;$('a6').textContent='👻 Заморозить монстра: выкл';$('a7').textContent='🧱 Ноуклип: выкл';$('adm').style.display=role()==='admin'?'block':'none';$('tst').style.display=role()==='tester'?'block':'none';ac();gtime=0;gotNow=[];HARD=hard;HK=hard?1.4:1;SPP=hard?72:60;SPH=hard?108:92;if(seed!==undefined)rnd=mulberry32(seed);build(hard,MP.on);rnd=Math.random;mmInit();kostya=false;hero='';stats.games++;if(MP.on)stats.mpGames++;saveProg();
 px=ST[0]*S+20;py=ST[1]*S+20;mo.x=mc[0]*S+20;mo.y=mc[1]*S+20;mo.last=[mc[0],mc[1]];mo.path=[];mo.st='p';
 actP=false;act=false;$('menu').style.display='none';playing=true;hud();
 say(hard?'ХАРД: комнат больше, монстр быстрее и слышит дальше!':'Монстр слепой, но слышит каждый звук. Найди ключ. Комнаты и мебель каждый раз новые!',5000)}
@@ -615,13 +620,13 @@ addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button'
 const aerr=m=>{$('aerr').textContent=m||''};
 function authTab(r){$('fLogin').style.display=r?'none':'flex';$('fReg').style.display=r?'flex':'none';$('tLogin').classList.toggle('act',!r);$('tReg').classList.toggle('act',r);aerr('')}
 $('tLogin').onclick=()=>authTab(false);$('tReg').onclick=()=>authTab(true);
-$('lg').oninput=()=>{$('lg').value=$('lg').value.replace(/\D/g,'').slice(0,4)};
+$('lg').oninput=()=>{$('lg').value=$('lg').value.replace(/\D/g,'').slice(0,8)};
 let busy=false;
-$('bLogin').onclick=async()=>{if(busy)return;const l=$('lg').value,p=$('lp').value;if(!/^\d{4}$/.test(l))return aerr('Логин — это 4 цифры');busy=true;aerr('Проверка…');let r='';try{r=await specRole(l,p)}catch(e){}busy=false;
+$('bLogin').onclick=async()=>{if(busy)return;const l=$('lg').value,p=$('lp').value;if(!/^\d{8}$/.test(l))return aerr('Логин — это 8 цифр');busy=true;aerr('Проверка…');let r='';try{r=await specRole(l,p)}catch(e){}busy=false;
 if(r){if(!accts[l])accts[l]={ach:{},winsN:0,skin:DSK,hair:DHR,sp:1};loginAs(l,r);$('lp').value='';aerr('');show('mMain');return}
-const a=accts[l];if(!a||a.pw!==hsh(l+':'+p))return aerr(window.crypto&&crypto.subtle?'Неверный логин или пароль':'Неверный логин или пароль (для некоторых аккаунтов нужен https)');loginAs(l);$('lp').value='';aerr('');show('mMain')};
+const a=accts[l];if(!a||a.pw!==hsh((a.hl||l)+':'+p))return aerr(window.crypto&&crypto.subtle?'Неверный логин или пароль':'Неверный логин или пароль (для некоторых аккаунтов нужен https)');loginAs(l);$('lp').value='';aerr('');show('mMain')};
 $('bReg').onclick=()=>{const p=$('rp').value;if(p.length<4||p.length>8)return aerr('Пароль: от 4 до 8 символов');if(p!==$('rp2').value)return aerr('Пароли не совпадают');
-let l;do{l=String(R(10000)).padStart(4,'0')}while(accts[l]);
+let l;do{l=String(R(100000000)).padStart(8,'0')}while(accts[l]||SPEC_OLD[l]);
 const first=!Object.keys(accts).filter(k=>!accts[k].sp).length;accts[l]={pw:hsh(l+':'+p),ach:first?ach:{},winsN:first?winsN:0,skin:DSK,hair:DHR};
 loginAs(l);saveProg();$('rp').value='';$('rp2').value='';aerr('');$('nl').textContent=l;show('mNew')};
 $('bCont').onclick=()=>show('mMain');
@@ -694,7 +699,7 @@ function mpFlagIn(k){if(k==='hasKey'&&!hasKey){hasKey=true;SFX.pick();say('🔑 
 else if(k==='power'&&!power){power=true;gp=1;SFX.power();say('⚡ Генератор запущен!')}
 else if(k==='noteFound'&&!noteFound){noteFound=true;say('📄 Код двери найден: '+CODE,4000)}
 else if(k==='meat')MP.meat=true;
-else if(k==='kostya'){MP.kostya=true;if(MP.host)mpKostyaEnd()}
+else if(k==='kostya'||k==='ovik'){MP.kostya=true;MP.hero=k;if(MP.host)mpKostyaEnd()}
 else if(k==='memoFound')memoFound=true;
 else if(k==='scFound'&&!scFound){scFound=true;say('📄 Найден код сейфа: '+SC,4000)}
 else if(k==='safeOpen')safeOpen=true;
@@ -724,7 +729,7 @@ function mpPeerLeft(id){delete MP.conns[id];const p=MP.pl[id];if(!p)return;
 if(!MP.started){delete MP.pl[id];if(MP.mon===id)MP.mon=null;bcastLobby();return}
 p.left=1;if(p.role==='m'){mpSend('end',{esc:0,why:'mleft'});mpEnd(0,'mleft')}else{if(p.st==='a')p.st='d';mpSend('st',{id:id,s:'d'});mpCheckEnd()}}
 function mpHostLost(){if(MP.ended||over)return;if(!MP.started){mpFail('Хост закрыл комнату');return}over=true;MP.ended={esc:0,why:'hlost'};UI.forEach(i=>$(i).style.display='none');$('et').textContent='Хост отключился';$('ep').textContent='Игра прервана.';$('end').style.display='flex'}
-function mpBegin(d){MP.started=true;MP.mode=d.mode;MP.hard=d.hard;MP.mon=d.mon;MP.ended=null;MP.spec=false;MP.meat=false;MP.kostya=false;MP.gshown=false;
+function mpBegin(d){MP.started=true;MP.mode=d.mode;MP.hard=d.hard;MP.mon=d.mon;MP.ended=null;MP.spec=false;MP.meat=false;MP.kostya=false;MP.hero='';MP.gshown=false;
 d.ids.forEach((id,i)=>{const p=MP.pl[id];if(!p)return;p.idx=i;p.role=id===d.mon?'m':'h';p.st='a';p.x=0;p.y=0;p.hid=0;p.mv=0;p.stt=0;delete p.tx;delete p.ty});
 MPM=d.mon===MP.me;MP.ai=MP.host&&d.mode==='coop';REV=MPM;
 startGame(d.hard,d.seed);const i=MP.pl[MP.me]?MP.pl[MP.me].idx:0;px=ST[0]*S+20+((i%3)-1)*8;py=ST[1]*S+20+Math.floor(i/3)*6;MP.lx=px;MP.ly=py;
@@ -735,8 +740,8 @@ function mpSelf(w,m){const p=MP.pl[MP.me];if(!p||p.st!=='a')return;p.st=w?'e':'d
 function mpCatch(id){const p=MP.pl[id];if(!MP.host||!p||p.st!=='a'||p.role!=='h')return;p.st='d';mpSend('st',{id:id,s:'d'});if(id!==MP.me){const c=MP.conns[id];if(c&&c.open)c.send({t:'eat',id:id})}mpCheckEnd()}
 function mpCheckEnd(){if(!MP.host||MP.ended||!MP.started)return;const hs=Object.values(MP.pl).filter(p=>p.role==='h');
 if(hs.length&&hs.every(p=>p.st!=='a')){const esc=hs.filter(p=>p.st==='e').length;mpSend('end',{esc:esc,meat:MP.meat});mpEnd(esc,undefined,MP.meat)}}
-function mpKostyaEnd(){if(!MP.host||MP.ended||!MP.started)return;const hs=Object.values(MP.pl).filter(p=>p.role==='h'&&p.st!=='d');hs.forEach(p=>{if(p.st==='a'){p.st='e';mpSend('st',{id:p.id,s:'e'})}});const esc=Math.max(1,hs.length);mpSend('end',{esc:esc,meat:MP.meat,kostya:1});mpEnd(esc,undefined,MP.meat,1)}
-function mpEnd(esc,why,meat,kst){if(MP.ended)return;if(meat)MP.meat=true;if(kst)MP.kostya=true;MP.ended={esc:esc,why:why};if(!sc){if(esc>0&&!why&&!MP.gshown){mpGroupScene();return}if(MPM&&!why&&!over)finish(esc===0,esc===0?'rwin':'rlose');else mpResults()}}
+function mpKostyaEnd(){if(!MP.host||MP.ended||!MP.started)return;const hs=Object.values(MP.pl).filter(p=>p.role==='h'&&p.st!=='d');hs.forEach(p=>{if(p.st==='a'){p.st='e';mpSend('st',{id:p.id,s:'e'})}});const esc=Math.max(1,hs.length);mpSend('end',{esc:esc,meat:MP.meat,kostya:MP.hero||'kostya'});mpEnd(esc,undefined,MP.meat,MP.hero||'kostya')}
+function mpEnd(esc,why,meat,kst){if(MP.ended)return;if(meat)MP.meat=true;if(kst){MP.kostya=true;MP.hero=typeof kst==='string'?kst:'kostya'}MP.ended={esc:esc,why:why};if(!sc){if(esc>0&&!why&&!MP.gshown){mpGroupScene();return}if(MPM&&!why&&!over)finish(esc===0,esc===0?'rwin':'rlose');else mpResults()}}
 function mpSceneDone(){sc=null;if(MP.ended){if(MP.ended.esc>0&&!MP.ended.why&&!MP.gshown){mpGroupScene();return}mpResults();return}if(!MPM){MP.spec=true;MP.watch=null;say('👁 Ты наблюдаешь за игрой. Тапни экран, чтобы сменить игрока',7000)}}
 function mpResults(){over=true;UI.forEach(i=>$(i).style.display='none');const E=MP.ended||{esc:0},me=MP.pl[MP.me];
 let title=MPM?(E.esc===0?'Ты съел всех людей! 🥩':'Кто-то сбежал 🟢'):(me&&me.st==='e'?'Ты выбрался! 🟢':'Тебя съели 🥩');if(E.why==='mleft')title='Монстр покинул игру';
